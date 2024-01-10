@@ -2,10 +2,16 @@
 import CheckoutProduct from "@/components/CheckoutProduct";
 import { selectItems, selectTotal } from "@/slices/cartSlice";
 import { Products } from "@/typings";
+import { loadStripe } from "@stripe/stripe-js";
+import Axios from "axios";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import React from "react";
 import { useSelector } from "react-redux";
+
+let publicKey: string = process.env.stripe_public_key!;
+
+const stripePromise = loadStripe(publicKey);
 
 const CheckoutPage = () => {
   const items = useSelector(selectItems);
@@ -15,6 +21,29 @@ const CheckoutPage = () => {
   const newPrice = indianLocale.format(total * 82); // convert usd to inr
 
   const session = useSession();
+
+  const createCheckoutSession = async () => {
+    const stripe = await stripePromise;
+
+    // call the backend to create a checkout session
+    const data = {
+      items: items,
+      email: session.data?.user?.email,
+    };
+
+    const response = await fetch("api/payment", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+
+    const resData = await response.json();
+    //
+    const result = await stripe?.redirectToCheckout({
+      sessionId: resData.session.id,
+    });
+
+    if (result?.error) alert(result.error.message);
+  };
 
   return (
     <div className="bg-gray-100">
@@ -52,13 +81,15 @@ const CheckoutPage = () => {
               </h2>
 
               <button
-                disabled={!session}
-                className={`button mt-2 ${
-                  !session &&
-                  "from-gray-300 to-gray-500 border-gray-200 text-gray-300 cursor-not-allowed"
+                disabled={!session.data}
+                className={`mt-2 ${
+                  !session.data
+                    ? "from-gray-300 to-gray-500 border-gray-200 text-gray-300 cursor-not-allowed"
+                    : "button"
                 }`}
+                onClick={createCheckoutSession}
               >
-                {!session ? "Sign in to checkout" : "Proceed to checkout"}
+                {!session.data ? "Sign in to checkout" : "Proceed to checkout"}
               </button>
             </>
           )}
