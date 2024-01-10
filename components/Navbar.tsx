@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import React from "react";
 import {
@@ -5,20 +7,30 @@ import {
   MagnifyingGlassIcon,
   ShoppingCartIcon,
 } from "@heroicons/react/24/outline";
+import { useSession, signIn, signOut } from "next-auth/react";
+import Link from "next/link";
+import { useSelector } from "react-redux";
+import { selectItems } from "@/slices/cartSlice";
 
 const Navbar = () => {
+  const { data: session } = useSession();
+
+  const items = useSelector(selectItems);
+
   return (
     <header>
       {/* top nav */}
       <div className="flex items-center bg-amazon_blue p-1 flex-grow py-2 gap-x-2">
         <div className="mt-2 flex items-center flex-grow sm:flex-grow-0">
-          <Image
-            src="https://links.papareact.com/f90"
-            alt="Amzon logo"
-            width={150}
-            height={40}
-            className="cursor-pointer object-contain"
-          />
+          <Link href="/">
+            <Image
+              src="https://links.papareact.com/f90"
+              alt="Amzon logo"
+              width={150}
+              height={40}
+              className="cursor-pointer object-contain"
+            />
+          </Link>
         </div>
 
         {/* search bar */}
@@ -34,23 +46,28 @@ const Navbar = () => {
         {/* right side */}
 
         <div className="text-white flex items-center text-xs space-x-6 mx-6 whitespace-nowrap">
-          <div className="link">
-            <p>Hello, Shilajit Dutta</p>
+          <div
+            className="link"
+            onClick={() => (!session ? signIn() : signOut())}
+          >
+            <p>{session ? `Hello, ${session?.user?.name}` : "Sign In"}</p>
             <p className="font-extrabold md:text-sm">Account & lists</p>
           </div>
           <div className="link">
             <p>Return</p>
             <p className="font-extrabold md:text-sm">& Orders</p>
           </div>
-          <div className="link relative flex items-center">
-            <span className="absolute top-0 right-0 md:right-9 h-4 w-4 bg-yellow-400 text-center rounded-full text-black font-bold">
-              0
-            </span>
-            <ShoppingCartIcon className="h-10" />
-            <p className="hidden sm:inline font-extrabold md:text-sm mt-2">
-              Cart
-            </p>
-          </div>
+          <Link href="/checkout">
+            <div className="link relative flex items-center">
+              <span className="absolute top-0 right-0 md:right-9 h-4 w-4 bg-yellow-400 text-center rounded-full text-black font-bold">
+                {items.length}
+              </span>
+              <ShoppingCartIcon className="h-10" />
+              <p className="hidden sm:inline font-extrabold md:text-sm mt-2">
+                Cart
+              </p>
+            </div>
+          </Link>
         </div>
       </div>
       {/* bottom nav */}
@@ -60,7 +77,7 @@ const Navbar = () => {
         </p>
         <p className="link">Prime Video</p>
         <p className="link">Amazon Business</p>
-        <p className="link hidden md:inline-flex">Today's Deals</p>
+        <p className="link hidden md:inline-flex">Today&apos;s Deals</p>
         <p className="link hidden md:inline-flex">Electronics</p>
         <p className="link hidden md:inline-flex">Food & Grocery</p>
         <p className="link hidden md:inline-flex">Prime</p>

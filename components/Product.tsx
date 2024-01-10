@@ -5,7 +5,8 @@ import Image from "next/image";
 import { useState } from "react";
 import { StarIcon } from "@heroicons/react/16/solid";
 import { StarIcon as StarOutLine } from "@heroicons/react/24/outline";
-import Currency from "react-currency-formatter";
+import { useDispatch } from "react-redux";
+import { addToCart } from "@/slices/cartSlice";
 
 const Product = ({
   id,
@@ -16,9 +17,31 @@ const Product = ({
   image,
   rating,
 }: Products) => {
+  const dispatch = useDispatch();
+
   const roundedRating = Math.round(rating.rate); // Round the rating from the api
 
-  const [hasPrime] = useState(Math.random() < 0.5);
+  const [hasPrime] = useState(Math.random() < 0.5); // randomize having prime
+
+  let indianLocale = Intl.NumberFormat("en-IN"); // format the price
+
+  const newPrice = indianLocale.format(price * 82); // convert usd to inr
+
+  const addItemtoCart = () => {
+    const product = {
+      id,
+      title,
+      price,
+      description,
+      category,
+      image,
+      rating,
+      hasPrime,
+    };
+
+    // send product as an action to global store
+    dispatch(addToCart(product));
+  };
 
   return (
     <div className="relative flex flex-col m-5 bg-white z-30 p-10 ">
@@ -40,7 +63,7 @@ const Product = ({
       </div>
       <p className="text-xs my-2 line-clamp-2">{description}</p>
       <div className="mb-5">
-        <Currency quantity={price * 82} currency="INR" />
+        <p>₹ {newPrice}</p>
       </div>
       {hasPrime && (
         <div className="flex items-center space-x-2 -mt-5">
@@ -49,10 +72,12 @@ const Product = ({
             alt="amazon prime logo"
             className="w-12"
           />
-          <p className="text-xs text-gray-500">FREE Next-day Delhivery</p>
+          <p className="text-xs text-gray-500">FREE Next-day Delivery</p>
         </div>
       )}
-      <button className="mt-auto button">Add to Cart</button>
+      <button onClick={addItemtoCart} className="mt-auto button">
+        Add to Cart
+      </button>
     </div>
   );
 };
